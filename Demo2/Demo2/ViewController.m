@@ -24,13 +24,6 @@
     [self.view addSubview:self.label];
     self.view.backgroundColor = [UIColor brownColor];
     self.textField = [[UITextField alloc]initWithFrame:CGRectMake(0, 600, self.view.frame.size.width, 30)];
-    [self.textField limitInputWithFilterBlock:nil withWordLimit:5];
-    [self.textField limitInputWithFilterBlock:nil withWordLimit:10];
-    [self.textField limitInputWithFilterBlock:^NSString *(UITextField *textField) {
-        NSMutableString * str = textField.text.mutableCopy;
-        [str replaceOccurrencesOfString:@"我" withString:@"**" options:NSCaseInsensitiveSearch range:NSMakeRange(0, str.length)];
-        return str.copy;
-    } withWordLimit:10];
     [self.textField limitOnlyChineseCharWithWordLimit:10];
     [self.textField adaptKeyboardWithOffset:-15];
     [self.view addSubview:self.textField];

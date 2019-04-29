@@ -10,6 +10,8 @@
 
 static float _moveDistance = 0;
 static float _offset = 0;
+static BOOL _isShow = NO;
+
 
 @implementation UITextField (adaptKeyboard)
 - (void)adaptKeyboard {
@@ -37,37 +39,60 @@ static float _offset = 0;
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillHideNotification object:nil];
 }
 
+#pragma mark - 键盘通知的方法
+
 - (void)keyboardWillShow:(NSNotification *)sender {
-    if (self.isFirstResponder == NO) return;
-    if (self.superview == nil) return;
+    if (self.isFirstResponder == NO) {
+        return;
+    }
+    if (self.superview == nil) {
+        return;
+    }
+    if (_isShow) {
+        return;
+    }
     
     CGFloat scren_height = [UIScreen mainScreen].bounds.size.height;
     UIWindow * window=[[[UIApplication sharedApplication] delegate] window];
     CGRect rect= [self convertRect: self.bounds toView:window];
-    
     CGFloat textFieldBottom = scren_height - CGRectGetMaxY(rect);
     
+    CGRect beginRect = [[sender.userInfo objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue];
+    CGRect endRect = [[sender.userInfo objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
     CGFloat duration = [sender.userInfo[UIKeyboardAnimationDurationUserInfoKey] floatValue];
-    CGRect keyboardF = [sender.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-    CGFloat keyboardH = keyboardF.size.height;
+    CGFloat keyboardH = endRect.size.height;
     
-    if (keyboardH > textFieldBottom) {
-        _moveDistance = (textFieldBottom - keyboardH);
-        _moveDistance += _offset;
+    // 第三方键盘回调三次问题，监听仅执行最后一次
+    if(beginRect.size.height > 0 && (beginRect.origin.y - endRect.origin.y > 0)){
         
-        UIView * controllerView = [self viewController].view;
-        CGRect frame = controllerView.frame;
-        frame.origin.y += _moveDistance;
+        if (keyboardH > textFieldBottom) {
+            _moveDistance = (textFieldBottom - keyboardH);
+            _moveDistance += _offset;
+            
+            UIView * controllerView = [self viewController].view;
+            CGRect frame = controllerView.frame;
+            frame.origin.y += _moveDistance;
+            
+            [UIView animateWithDuration:duration animations:^{
+                controllerView.frame = frame;
+            }];
+        }
         
-        [UIView animateWithDuration:duration animations:^{
-            controllerView.frame = frame;
-        }];
     }
+    _isShow = YES;
 }
 
+
 - (void)keyboardWillHide:(NSNotification *)sender {
-    if (self.isFirstResponder == NO) return;
-    if (self.superview == nil) return;
+    if (self.isFirstResponder == NO) {
+         return;
+    }
+    if (self.superview == nil) {
+        return;
+    }
+    if (!_isShow) {
+        return;
+    }
     
     CGFloat duration = [sender.userInfo[UIKeyboardAnimationDurationUserInfoKey] floatValue];
     
@@ -81,6 +106,7 @@ static float _offset = 0;
         }];
         _moveDistance = 0;
     }
+    _isShow = NO;
 }
 
 //获取控制器
